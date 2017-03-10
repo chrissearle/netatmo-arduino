@@ -3,8 +3,23 @@
 
 import lnetatmo
 import json
+import os
 
-authorization = lnetatmo.ClientAuth()
+
+def load_secrets():
+    try:
+        with open(os.path.join(os.path.dirname(__file__), 'secrets.json')) as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {}
+
+
+secrets = load_secrets()
+
+authorization = lnetatmo.ClientAuth(clientId=secrets.get('CLIENT_ID', ''),
+                                    clientSecret=secrets.get('CLIENT_SECRET', ''),
+                                    username=secrets.get('USERNAME', ''),
+                                    password=secrets.get('PASSWORD', ''))
 
 weatherData = lnetatmo.WeatherStationData(authorization)
 
