@@ -4,6 +4,7 @@
 import lnetatmo
 import json
 import os
+import sys
 
 
 def load_secrets():
@@ -65,4 +66,13 @@ output = {
 
 json_data = json.dumps(output)
 
-print(json_data)
+fh = sys.stdout
+
+if len(sys.argv) > 1:
+    fh = open(sys.argv[1], "w")
+
+print(json_data, file=fh)
+
+if len(sys.argv) > 1:
+    fh.close()
+
