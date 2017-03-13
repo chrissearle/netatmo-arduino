@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # encoding=utf-8
 
+from urllib.error import HTTPError
+
 import lnetatmo
 import json
 import os
@@ -15,6 +17,61 @@ def load_secrets():
         return {}
 
 
+def build_json(weather_data):
+    data = weather_data.lastData()
+
+    indoor = data['Indoor']
+    outdoor = data['Outdoor']
+    rain = data['Rain gauge']
+    wind = data['Wind Gauge']
+
+    return {
+        'Indoor':
+            {
+                'CO2': indoor['CO2'],
+                'Humidity': indoor['Humidity'],
+                'Noise': indoor['Noise'],
+                'Pressure': indoor['Pressure'],
+                'Temperature': indoor['Temperature'],
+                'MaxTemp': indoor['max_temp'],
+                'MinTemp': indoor['min_temp'],
+                'PressureTrend': indoor['pressure_trend']
+            },
+        'Outdoor':
+            {
+                'Humidity': outdoor['Humidity'],
+                'Temperature': outdoor['Temperature'],
+                'MaxTemp': outdoor['max_temp'],
+                'MinTemp': outdoor['min_temp'],
+                'TemperatureTrend': outdoor['temp_trend']
+            },
+        'Rain':
+            {
+                'Rain': rain['Rain'],
+                'RainHour': rain['sum_rain_1'],
+                'RainDay': rain['sum_rain_24']
+            },
+        'Wind':
+            {
+                'GustStrength': wind['GustStrength'],
+                'WindStrength': wind['WindStrength'],
+                'MaxWind': wind['max_wind_str']
+            }
+    }
+
+
+def dump_json(data):
+    fh = sys.stdout
+
+    if len(sys.argv) > 1:
+        fh = open(sys.argv[1], "w")
+
+    print(data, file=fh)
+
+    if len(sys.argv) > 1:
+        fh.close()
+
+
 secrets = load_secrets()
 
 authorization = lnetatmo.ClientAuth(clientId=secrets.get('CLIENT_ID', ''),
@@ -22,57 +79,13 @@ authorization = lnetatmo.ClientAuth(clientId=secrets.get('CLIENT_ID', ''),
                                     username=secrets.get('USERNAME', ''),
                                     password=secrets.get('PASSWORD', ''))
 
-weatherData = lnetatmo.WeatherStationData(authorization)
+try:
+    weatherData = lnetatmo.WeatherStationData(authorization)
 
-data = weatherData.lastData()
-dataIndoor = data['Indoor']
-dataOutdoor = data['Outdoor']
-dataRain = data['Rain gauge']
-dataWind = data['Wind Gauge']
+    output = build_json(weatherData)
 
-output = {
-    'Indoor':
-        {
-            'CO2': dataIndoor['CO2'],
-            'Humidity': dataIndoor['Humidity'],
-            'Noise': dataIndoor['Noise'],
-            'Pressure': dataIndoor['Pressure'],
-            'Temperature': dataIndoor['Temperature'],
-            'MaxTemp': dataIndoor['max_temp'],
-            'MinTemp': dataIndoor['min_temp'],
-            'PressureTrend': dataIndoor['pressure_trend']
-        },
-    'Outdoor':
-        {
-            'Humidity': dataOutdoor['Humidity'],
-            'Temperature': dataOutdoor['Temperature'],
-            'MaxTemp': dataOutdoor['max_temp'],
-            'MinTemp': dataOutdoor['min_temp'],
-            'TemperatureTrend': dataOutdoor['temp_trend']
-        },
-    'Rain':
-        {
-            'Rain': dataRain['Rain'],
-            'RainHour': dataRain['sum_rain_1'],
-            'RainDay': dataRain['sum_rain_24']
-        },
-    'Wind':
-        {
-            'GustStrength': dataWind['GustStrength'],
-            'WindStrength': dataWind['WindStrength'],
-            'MaxWind': dataWind['max_wind_str']
-        }
-}
+    json_data = json.dumps(output)
 
-json_data = json.dumps(output)
-
-fh = sys.stdout
-
-if len(sys.argv) > 1:
-    fh = open(sys.argv[1], "w")
-
-print(json_data, file=fh)
-
-if len(sys.argv) > 1:
-    fh.close()
-
+    dump_json(json_data)
+except HTTPError as err:
+    print("Fetch error {err.code} - {err.msg}".format(err=err), file=sys.stderr)
