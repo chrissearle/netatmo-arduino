@@ -74,12 +74,12 @@ def dump_json(data):
 
 secrets = load_secrets()
 
-authorization = lnetatmo.ClientAuth(clientId=secrets.get('CLIENT_ID', ''),
-                                    clientSecret=secrets.get('CLIENT_SECRET', ''),
-                                    username=secrets.get('USERNAME', ''),
-                                    password=secrets.get('PASSWORD', ''))
-
 try:
+    authorization = lnetatmo.ClientAuth(clientId=secrets.get('CLIENT_ID', ''),
+                                        clientSecret=secrets.get('CLIENT_SECRET', ''),
+                                        username=secrets.get('USERNAME', ''),
+                                        password=secrets.get('PASSWORD', ''))
+
     weatherData = lnetatmo.WeatherStationData(authorization)
 
     output = build_json(weatherData)
