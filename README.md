@@ -16,4 +16,18 @@ To create an app - see https://dev.netatmo.com/dev/createanapp
 
 ## arduino
 
-TODO
+The arduino script needs a host and path to the file created by the python script and also a wifi SSID and password.
+
+### Screenshots
+
+#### Temperature
+
+![Temperature screenshot](screenshot-1.jpg "Temperature view")
+
+![Temperature screenshot](screenshot-1-details.png "Temperature view")
+
+#### Wind and Rain
+
+![Wind and rain screenshot](screenshot-2.jpg "Wind and Rain view")
+
+![Wind and rain screenshot](screenshot-2-details.png "Wind and Rain view")
