@@ -33,6 +33,8 @@ const unsigned long pollIntervalScreenMillis = 5L * 1000;
 unsigned long lastUpdateFetchMillis = -pollIntervalFetchMillis;
 unsigned long lastUpdateScreenMillis = -pollIntervalScreenMillis;
 
+int screenToShow = 0;
+const int maxScreen = 2;
 
 struct Rain {
   float rain;
@@ -75,19 +77,16 @@ struct Weather {
 Weather weather;
 
 #define Thermometer_width 10
-#define Thermometer_height 48
-
+#define Thermometer_height 36
 static unsigned char Thermometer_bits[] = {
   0x30, 0x00, 0x48, 0x00, 0x84, 0x00, 0x84, 0x00, 0x84, 0x00, 0x84, 0x00, 
-  0x84, 0x00, 0x84, 0x00, 0x84, 0x00, 0x84, 0x00, 0x84, 0x00, 0x84, 0x00, 
-  0x84, 0x00, 0x84, 0x00, 0x84, 0x00, 0x84, 0x00, 0x84, 0x00, 0x84, 0x00, 
-  0x84, 0x00, 0xB4, 0x00, 0xB4, 0x00, 0xB4, 0x00, 0xB4, 0x00, 0xB4, 0x00, 
+  0x84, 0x00, 0x84, 0x00, 0xB4, 0x00, 0xB4, 0x00, 0xB4, 0x00, 0xB4, 0x00, 
   0xB4, 0x00, 0xB4, 0x00, 0xB4, 0x00, 0xB4, 0x00, 0xB4, 0x00, 0xB4, 0x00, 
   0xB4, 0x00, 0xB4, 0x00, 0xB4, 0x00, 0xB4, 0x00, 0xB4, 0x00, 0xB4, 0x00, 
   0xB4, 0x00, 0xB4, 0x00, 0xB4, 0x00, 0xB4, 0x00, 0x7A, 0x01, 0xFD, 0x02, 
   0xFD, 0x02, 0xFD, 0x02, 0xFD, 0x02, 0x7A, 0x01, 0x84, 0x00, 0x78, 0x00, 
   };
-
+  
 #define TrendUp_width 10
 #define TrendUp_height 10
 static unsigned char TrendUp_bits[] = {
@@ -99,6 +98,20 @@ static unsigned char TrendUp_bits[] = {
 static unsigned char TrendDown_bits[] = {
   0x01, 0x00, 0x02, 0x00, 0x04, 0x00, 0x08, 0x00, 0x10, 0x00, 0x20, 0x02, 
   0x40, 0x02, 0x80, 0x02, 0x00, 0x03, 0xE0, 0x03, };
+
+#define Wind_width 10
+#define Wind_height 12
+static unsigned char Wind_bits[] = {
+  0x00, 0x00, 0x00, 0x00, 0xCC, 0x00, 0x12, 0x01, 0x08, 0x01, 0xFF, 0x00, 
+  0x00, 0x00, 0xFC, 0x00, 0x00, 0x01, 0x00, 0x01, 0x80, 0x00, 0x00, 0x00, 
+  };
+
+#define Rain_width 10
+#define Rain_height 12
+static unsigned char Rain_bits[] = {
+  0x40, 0x00, 0x40, 0x00, 0xA0, 0x00, 0xA4, 0x00, 0x14, 0x01, 0x1A, 0x01, 
+  0xEA, 0x00, 0x51, 0x01, 0x51, 0x01, 0x2E, 0x02, 0x20, 0x02, 0xC0, 0x01, 
+  };
 
 void setup(void) {
   Serial.begin(115200);
@@ -299,24 +312,76 @@ void fetchData() {
 }
 
 void showTemperature(Weather *weather) {
-    u8g2.drawXBM( 0, 0, Thermometer_width, Thermometer_height, Thermometer_bits);
-
-    u8g2.setFont(u8g2_font_osr18_tf);
+    u8g2.drawXBM(0, 12, Thermometer_width, Thermometer_height, Thermometer_bits);
 
     char indoorTemp[10] = { '\0' };
     char outdoorTemp[10] = { '\0' };
 
-    dtostrf(weather->indoor.temperature,5,1,indoorTemp);
-    dtostrf(weather->outdoor.temperature,5,1,outdoorTemp);
+    dtostrf(weather->indoor.temperature,-5,1,indoorTemp);
+    dtostrf(weather->outdoor.temperature,-5,1,outdoorTemp);
 
-    u8g2.drawStr(14, 22, indoorTemp);
-    u8g2.drawStr(80 - u8g2.getStrWidth(outdoorTemp), 46, outdoorTemp);
+    u8g2.setFont(u8g2_font_helvR14_tr);
+
+    u8g2.drawStr(16, 16, indoorTemp);
+    u8g2.drawStr(16, 46, outdoorTemp);
+
+    char indoorTempMin[10] = { '\0' };
+    char indoorTempMax[10] = { '\0' };
+    char outdoorTempMin[10] = { '\0' };
+    char outdoorTempMax[10] = { '\0' };
+
+    dtostrf(weather->indoor.minTemp,-5,1,indoorTempMin);
+    dtostrf(weather->indoor.maxTemp,-5,1,indoorTempMax);
+    dtostrf(weather->outdoor.minTemp,5,1,outdoorTempMin);
+    dtostrf(weather->outdoor.maxTemp,5,1,outdoorTempMax);
+
+    u8g2.setFont(u8g2_font_helvR08_tr);
+
+    u8g2.drawStr(84 - u8g2.getStrWidth(indoorTempMax), 8, indoorTempMax);
+    u8g2.drawStr(84 - u8g2.getStrWidth(indoorTempMin), 18, indoorTempMin);
+    u8g2.drawStr(84 - u8g2.getStrWidth(outdoorTempMax), 38, outdoorTempMax);
+    u8g2.drawStr(84 - u8g2.getStrWidth(outdoorTempMin), 48, outdoorTempMin);
+    
 
     if (strcmp(weather->outdoor.temperatureTrend, "up") == 0) {
-      u8g2.drawXBM( 14, 36, TrendUp_width, TrendUp_height, TrendUp_bits);
+      u8g2.drawXBM(0, 0, TrendUp_width, TrendUp_height, TrendUp_bits);
     } else if (strcmp(weather->outdoor.temperatureTrend, "down") == 0) {
-      u8g2.drawXBM( 14, 36, TrendDown_width, TrendDown_height, TrendDown_bits);
+      u8g2.drawXBM(0, 0, TrendDown_width, TrendDown_height, TrendDown_bits);
     }
+}
+
+void showWindAndRain(Weather *weather) {
+    u8g2.drawXBM(0, 6, Wind_width, Wind_height, Wind_bits);
+    u8g2.drawXBM(0, 30, Rain_width, Rain_height, Rain_bits);
+
+    char windStrength[10] = { '\0' };
+    char rain[10] = { '\0' };
+
+    dtostrf(weather->wind.strength,-5,1,windStrength);
+    dtostrf(weather->rain.rain,-5,1,rain);
+
+    u8g2.setFont(u8g2_font_helvR14_tr);
+
+    u8g2.drawStr(16, 16, windStrength);
+    u8g2.drawStr(16, 46, rain);
+
+    char windGust[10] = { '\0' };
+    char windMax[10] = { '\0' };
+    char rainHour[10] = { '\0' };
+    char rainDay[10] = { '\0' };
+
+    dtostrf(weather->wind.gust,-5,1,windGust);
+    dtostrf(weather->wind.maxWind,-5,1,windMax);
+    dtostrf(weather->rain.rainHour,5,1,rainHour);
+    dtostrf(weather->rain.rainDay,5,1,rainDay);
+
+    u8g2.setFont(u8g2_font_helvR08_tr);
+
+    u8g2.drawStr(84 - u8g2.getStrWidth(windMax), 8, windMax);
+    u8g2.drawStr(84 - u8g2.getStrWidth(windGust), 18, windGust);
+    u8g2.drawStr(84 - u8g2.getStrWidth(rainDay), 38, rainDay);
+    u8g2.drawStr(84 - u8g2.getStrWidth(rainHour), 48, rainHour);
+
 }
 
 void showPage(Weather *weather, int page) {
@@ -326,6 +391,9 @@ void showPage(Weather *weather, int page) {
     switch (page) {
       case 0:
         showTemperature(weather);
+        break;
+      case 1:
+        showWindAndRain(weather);
         break;
     }
   } while ( u8g2.nextPage() );
@@ -343,7 +411,13 @@ void loop() {
   if (currentMillis - lastUpdateScreenMillis >= pollIntervalScreenMillis) {
     lastUpdateScreenMillis = currentMillis;
 
-    showPage(&weather, 0);
+    showPage(&weather, screenToShow);
+    
+    screenToShow = screenToShow + 1;
+    
+    if (screenToShow >= maxScreen) {
+      screenToShow = 0;
+    }
   }
 
   int val = digitalRead(SENSOR_PIN);
