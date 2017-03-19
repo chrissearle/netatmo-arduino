@@ -421,7 +421,7 @@ void loop() {
   }
 
   int val = digitalRead(SENSOR_PIN);
-  if (val == HIGH) {
+  if (val == LOW) {
     digitalWrite(LIGHT_PIN, LOW);
   } else {
     digitalWrite(LIGHT_PIN, HIGH);
