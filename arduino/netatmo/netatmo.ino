@@ -6,6 +6,11 @@
 #include <ESP8266WiFi.h>
 #include <HttpClient.h>
 
+//needed for library
+#include <DNSServer.h>
+#include <ESP8266WebServer.h>
+#include <WiFiManager.h>
+
 #include <ArduinoJson.h>
 
 #define CLK_PIN D5
@@ -16,11 +21,8 @@
 #define LIGHT_PIN D0
 #define SENSOR_PIN D4
 
-const char* ssid = "SSID";
-const char* password = "WIFIPASSWORD";
-
-const char *kHostname = "HOST";
-const char *kPath = "/RUTER_PATH.json";
+const char *kHostname = "goldeneagle.home.chrissearle.org";
+const char *kPath = "/netatmo.json";
 
 U8G2_PCD8544_84X48_1_4W_SW_SPI u8g2(U8G2_R0, CLK_PIN, DIN_PIN, CE_PIN, DC_PIN, RST_PIN);
 
@@ -115,23 +117,22 @@ static unsigned char Rain_bits[] = {
 
 void setup(void) {
   Serial.begin(115200);
-
-  Serial.print("Connecting to: ");
-  Serial.println(ssid);
-
-  WiFi.begin(ssid, password);
-
-  while (WiFi.status() != WL_CONNECTED)
-  {
-    Serial.print(".");
-    delay(500);
-  }
-  
-  Serial.println();
-  Serial.println("Connected");
   
   pinMode(LIGHT_PIN, OUTPUT);
   pinMode(SENSOR_PIN, INPUT);
+
+  Serial.println();
+  Serial.println("Connecting");
+
+  WiFiManager wifiManager;
+  wifiManager.autoConnect("NetatmoWemosAP");
+
+  Serial.println();
+  Serial.println("Connected");
+
+  Serial.print("Will use ");
+  Serial.print(kHostname);
+  Serial.println(kPath);
 
   memset(&weather, '\0', sizeof(Weather));
 
@@ -296,16 +297,16 @@ void fetchData() {
         
         updateData(body.c_str());
       } else {
-        Serial.print("Header skip failed");
-        Serial.print(err);
+        Serial.print("Header skip failed ");
+        Serial.println(err);
       }
     } else {
-      Serial.print("Fetch failed");
-      Serial.print(err);
+      Serial.print("Fetch failed ");
+      Serial.println(err);
     }
   } else {
-    Serial.print("Connect failed");
-    Serial.print(err);
+    Serial.print("Connect failed ");
+    Serial.println(err);
   }
 
   http.stop();
