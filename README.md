@@ -16,9 +16,11 @@ To create an app - see https://dev.netatmo.com/dev/createanapp
 
 ### Development
 
+```
 mkvirtualenv -p $(which python3) netatmo
 workon netatmo
 pip install -r requirements.txt
+```
 
 ## arduino
 
