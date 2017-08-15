@@ -14,6 +14,12 @@ It requires the following four variables in secrets.json (see secrets_sample.jso
 
 To create an app - see https://dev.netatmo.com/dev/createanapp
 
+### Development
+
+mkvirtualenv -p $(which python3) netatmo
+workon netatmo
+pip install -r requirements.txt
+
 ## arduino
 
 The arduino script needs a host and path to the file created by the python script and also a wifi SSID and password.

@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # encoding=utf-8
-
 from urllib.error import HTTPError
 
 import lnetatmo
@@ -25,6 +24,7 @@ def build_json(weather_data):
     rain = data['Rain gauge']
     wind = data['Wind Gauge']
 
+
     return {
         'Indoor':
             {
@@ -48,8 +48,8 @@ def build_json(weather_data):
         'Rain':
             {
                 'Rain': rain['Rain'],
-                'RainHour': rain['sum_rain_1'],
-                'RainDay': rain['sum_rain_24']
+                'RainHour': rain['sum_rain_1'] if 'sum_rain_1' in rain else None,
+                'RainDay': rain['sum_rain_24'] if 'sum_rain_24' in rain else None
             },
         'Wind':
             {
