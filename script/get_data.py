@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # encoding=utf-8
+import datetime
+from pprint import pprint
 from urllib.error import HTTPError
 
 import lnetatmo
@@ -24,7 +26,6 @@ def build_json(weather_data):
     rain = data['Rain gauge']
     wind = data['Wind Gauge']
 
-
     return {
         'Indoor':
             {
@@ -35,7 +36,9 @@ def build_json(weather_data):
                 'Temperature': indoor['Temperature'],
                 'MaxTemp': indoor['max_temp'],
                 'MinTemp': indoor['min_temp'],
-                'PressureTrend': indoor['pressure_trend']
+                'PressureTrend': indoor['pressure_trend'],
+                'LastSeen': indoor['When'],
+                'LastSeenUTC': datetime.datetime.utcfromtimestamp(indoor['When']).strftime('%Y-%m-%dT%H:%M:%SZ'),
             },
         'Outdoor':
             {
@@ -43,19 +46,25 @@ def build_json(weather_data):
                 'Temperature': outdoor['Temperature'],
                 'MaxTemp': outdoor['max_temp'],
                 'MinTemp': outdoor['min_temp'],
-                'TemperatureTrend': outdoor['temp_trend']
+                'TemperatureTrend': outdoor['temp_trend'],
+                'LastSeen': outdoor['When'],
+                'LastSeenUTC': datetime.datetime.utcfromtimestamp(outdoor['When']).strftime('%Y-%m-%dT%H:%M:%SZ'),
             },
         'Rain':
             {
                 'Rain': rain['Rain'],
                 'RainHour': rain['sum_rain_1'] if 'sum_rain_1' in rain else None,
-                'RainDay': rain['sum_rain_24'] if 'sum_rain_24' in rain else None
+                'RainDay': rain['sum_rain_24'] if 'sum_rain_24' in rain else None,
+                'LastSeen': rain['When'],
+                'LastSeenUTC': datetime.datetime.utcfromtimestamp(rain['When']).strftime('%Y-%m-%dT%H:%M:%SZ'),
             },
         'Wind':
             {
                 'GustStrength': wind['GustStrength'],
                 'WindStrength': wind['WindStrength'],
-                'MaxWind': wind['max_wind_str']
+                'MaxWind': wind['max_wind_str'],
+                'LastSeen': wind['When'],
+                'LastSeenUTC': datetime.datetime.utcfromtimestamp(wind['When']).strftime('%Y-%m-%dT%H:%M:%SZ'),
             }
     }
 
@@ -81,6 +90,8 @@ try:
                                         password=secrets.get('PASSWORD', ''))
 
     weatherData = lnetatmo.WeatherStationData(authorization)
+
+    #pprint(weatherData.__dict__)
 
     output = build_json(weatherData)
 
